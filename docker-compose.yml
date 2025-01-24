@@ -1,0 +1,27 @@
+name: ${NAME}-${ENV}
+
+services:
+  db:
+    container_name: ${NAME}-${ENV}-db
+    image: postgres:16.2
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_PASSWORD: ${DB_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${DB_POSTGRES_DB}
+    ports:
+      - 5432:5432
+    networks:
+      - db-net
+
+
+volumes:
+  db-data:
+    name: db-data
+
+networks:
+  db-net:
+    name: db-network
+
