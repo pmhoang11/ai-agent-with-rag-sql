@@ -31,7 +31,6 @@ Question: {input}"""
 query_prompt_template = PromptTemplate.from_template(query_prompt)
 
 
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
 class State(TypedDict):
     question: str
@@ -42,11 +41,6 @@ class State(TypedDict):
 class QueryOutput(TypedDict):
     """Generated SQL query."""
     query: Annotated[str, ..., "Syntactically valid SQL query."]
-
-
-# write_query({"question": "How many Employees are there?"})
-# rs = execute_query({"query": "SELECT COUNT(*) AS employee_count FROM users;"})
-
 
 
 class RelationDB:
@@ -72,6 +66,8 @@ class RelationDB:
         graph.add_edge("generate_answer", END)
 
         self.graph = graph.compile()
+        self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+
         # self.tools = {t.name: t for t in tools}
         # self.model = model.bind_tools(tools)
 
@@ -94,7 +90,7 @@ class RelationDB:
                 "input": state["question"],
             }
         )
-        structured_llm = llm.with_structured_output(QueryOutput)
+        structured_llm = self.llm.with_structured_output(QueryOutput)
         result = structured_llm.invoke(prompt)
         print(result)
         return {"query": result["query"]}
@@ -114,12 +110,12 @@ class RelationDB:
             f'SQL Query: {state["query"]}\n'
             f'SQL Result: {state["result"]}'
         )
-        response = llm.invoke(prompt)
+        response = self.llm.invoke(prompt)
         return {"answer": response.content}
 
 
-model = ChatOpenAI(model="gpt-4o-mini")
-rdb = RelationDB()
+# model = ChatOpenAI(model="gpt-4o-mini")
+# rdb = RelationDB()
 
 # rdb.graph.get_graph().draw_png('test.png')
 
@@ -127,10 +123,10 @@ rdb = RelationDB()
 #     {"question": "How many employees are there?"}
 # )
 # print(rs)
-for step in rdb.graph.stream(
-    {"question": "How many users are there?"}, stream_mode="updates"
-):
-    print(step)
+# for step in rdb.graph.stream(
+#     {"question": "How many users are there?"}, stream_mode="updates"
+# ):
+#     print(step)
 
 # chain = create_sql_query_chain(llm, db)
 # response = chain.invoke({"question": "How many employees are there"})

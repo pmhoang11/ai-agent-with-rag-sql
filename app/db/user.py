@@ -106,7 +106,7 @@ class UsersService:
             )
         return user
 
-    def add_user(self, user_schema: UserRequest, super_user_id: int) -> User:
+    def add_user(self, user_schema: UserRequest) -> User:
         """Creates user by given user schema and saves it in database.
         Args:
             user_schema: user request schema.

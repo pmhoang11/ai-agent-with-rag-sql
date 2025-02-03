@@ -13,6 +13,8 @@ from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, Too
 from langgraph.prebuilt import create_react_agent
 
 from app.core.config import settings
+from app.query_relation_db import RelationDB
+from app.rag import RAG
 
 
 @tool
@@ -29,11 +31,33 @@ def get_coolest_cities():
     """Get a list of coolest cities"""
     return "nyc, sf"
 
-tools = [get_weather, get_coolest_cities]
+@tool
+def get_rag(question: str):
+    """
+    This tool performs Retrieval-Augmented Generation (RAG) within the agent, \
+enabling dynamic knowledge retrieval before generating responses. \
+It queries a specified knowledge base (documents) and returns relevant context to improve accuracy and relevance in AI-generated outputs. \
+Ideal for handling complex queries, knowledge-intensive tasks, and real-time updates.\
+    """
+    rag = RAG()
+    result = rag.graph.invoke({"question": question})
+    return result["answer"]
+
+@tool
+def get_sql(question: str):
+    """
+    The SQL Query Tool enables users to retrieve structured data by converting natural language queries into SQL statements. \
+It allows querying workspace and space metadata, such as last updated timestamps, document counts, and other relevant attributes, \
+ensuring precise and efficient data access.\
+    """
+    rdb = RelationDB()
+    result = rdb.graph.invoke({"question": question})
+
+    return result["answer"]
+
+# tools = [get_weather, get_coolest_cities]
+tools = [get_rag, get_sql]
 tool_node = ToolNode(tools)
-
-# llm = ChatOpenAI(model="gpt-4o-mini", temperature=0).bind_tools(tools)
-
 
 
 class AgentState(TypedDict):
@@ -93,10 +117,10 @@ If you need to look up some information before asking a follow up question, you 
 model = ChatOpenAI(model="gpt-4o-mini")  #reduce inference cost
 abot = Agent(model, tools, system=prompt)
 
-messages = [HumanMessage(content="What is the weather in sf?")]
+# messages = [HumanMessage(content="What is the weather in sf?")]
 # result = abot.graph.invoke({"messages": messages})
 
 for chunk in abot.graph.stream(
-    {"messages": [("human", "what's the weather in the coolest cities?")]}, stream_mode="values"
+    {"messages": [("human", "The model structure of the proposed combination of WNet and BiLSTM")]}, stream_mode="values"
 ):
     print(chunk["messages"][-1])

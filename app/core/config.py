@@ -19,4 +19,10 @@ class Settings(BaseSettings):
     # LANGSMITH
     LANGCHAIN_API_KEY = os.getenv("LANGCHAIN_API_KEY", "")
     LANGCHAIN_TRACING_V2 = os.getenv("LANGCHAIN_TRACING_V2", False)
+
+    # DIR
+    PDF_DIR = os.getenv("PDF_DIR", "/mnt/data/pdf")
+    os.makedirs(PDF_DIR, exist_ok=True)
+
+
 settings = Settings()
