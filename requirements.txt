@@ -2,7 +2,7 @@ sqlalchemy==2.0.36
 python-dotenv==1.0.1
 psycopg2-binary==2.9.10
 pydantic-settings
-pydantic==1.10.0
+pydantic==2.10.4
 loguru==0.7.1
 langchain-openai==0.3.2
 langgraph==0.2.66
