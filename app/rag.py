@@ -20,6 +20,7 @@ prompt_template = PromptTemplate.from_template(prompt)
 # Define state for application
 class State(TypedDict):
     question: str
+    space_id: int
     context: List[Document]
     answer: str
 
@@ -33,7 +34,7 @@ class RAG:
         self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.6)
 
     def retrieve(self, state: State):
-        retrieved_docs = vectordb.retrieve(state["question"])
+        retrieved_docs = vectordb.retrieve(state["question"], space_id=state["space_id"])
         return {"context": retrieved_docs}
 
     def generate(self, state: State):
@@ -41,9 +42,3 @@ class RAG:
         messages = prompt_template.invoke({"question": state["question"], "context": docs_content})
         response = self.llm.invoke(messages)
         return {"answer": response.content}
-
-
-vectordb.embed_docs('/home/hoang/Downloads/bioengineering-11-00365.pdf')
-# rag = RAG()
-# rs = rag.graph.invoke({"question": "The model structure of the proposed combination of WNet and BiLSTM"})
-# print(rs)

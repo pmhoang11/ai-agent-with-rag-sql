@@ -3,10 +3,7 @@ from typing_extensions import Annotated, TypedDict
 from loguru import logger
 
 from langchain_core.prompts import PromptTemplate, FewShotPromptTemplate
-from langchain_community.utilities import SQLDatabase
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-import chromadb
-import chromadb.utils.embedding_functions as embedding_functions
 from langchain_chroma import Chroma
 from app.core.config import settings
 from uuid import uuid4
@@ -34,26 +31,39 @@ def load_docs(file_path) -> list[Document]:
 
 class VectorDB:
     def __init__(self):
-        self.client = chromadb.Client()
         self.embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
         self.vector_store = Chroma(
-            client=self.client,
             collection_name="test_abc_123",
             embedding_function=self.embeddings,
+            persist_directory=settings.VECTORDB_PERSIST_DIR
         )
 
-    def embed_docs(self, file_path):
+
+    def embed_docs(self, file_path, space_id:int):
         try:
             docs = load_docs(file_path)
             uuids = [str(uuid4()) for _ in range(len(docs))]
-
+            for doc in docs:
+                doc.metadata["space_id"] = space_id
             self.vector_store.add_documents(documents=docs, ids=uuids)
+            return uuids
         except Exception as e:
             logger.error(e)
 
-    def retrieve(self, question: str, score_thr=1.8, k=5):
+    def retrieve(self, question: str, score_thr=1.8, k=5, space_id=None):
         try:
-            retrieved_docs = self.vector_store.similarity_search_with_score(question, k=k)
+            if space_id:
+                retrieved_docs = self.vector_store.similarity_search_with_score(
+                    question,
+                    k=k,
+                    filter={"space_id": space_id}
+                )
+            else:
+                retrieved_docs = self.vector_store.similarity_search_with_score(
+                    question,
+                    k=k
+                )
+
             docs = []
             for doc, score in retrieved_docs:
                 if score <= score_thr:

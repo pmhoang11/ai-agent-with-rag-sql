@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from datetime import datetime
 
 
 
@@ -9,6 +10,7 @@ class DocumentResponse(BaseModel):
     workspace_id: int
     space_id: int
     title: str
+    uploaded_date: datetime
 
     class Config:
         orm_mode = True

@@ -10,7 +10,6 @@ from langgraph.graph import StateGraph, MessagesState, START, END
 from typing import TypedDict, Annotated
 import operator
 from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, ToolMessage
-from langgraph.prebuilt import create_react_agent
 
 from app.core.config import settings
 from app.query_relation_db import RelationDB
@@ -18,21 +17,7 @@ from app.rag import RAG
 
 
 @tool
-def get_weather(location: str):
-    """Call to get the current weather."""
-    if location.lower() in ["sf", "san francisco"]:
-        return "It's 60 degrees and foggy."
-    else:
-        return "It's 90 degrees and sunny."
-
-
-@tool
-def get_coolest_cities():
-    """Get a list of coolest cities"""
-    return "nyc, sf"
-
-@tool
-def get_rag(question: str):
+def get_rag(question: str, space_id: int):
     """
     This tool performs Retrieval-Augmented Generation (RAG) within the agent, \
 enabling dynamic knowledge retrieval before generating responses. \
@@ -40,7 +25,7 @@ It queries a specified knowledge base (documents) and returns relevant context t
 Ideal for handling complex queries, knowledge-intensive tasks, and real-time updates.\
     """
     rag = RAG()
-    result = rag.graph.invoke({"question": question})
+    result = rag.graph.invoke({"question": question, "space_id": space_id})
     return result["answer"]
 
 @tool
@@ -65,12 +50,12 @@ class AgentState(TypedDict):
 
 
 class Agent:
-    def __init__(self, model, tools, system=""):
+    def __init__(self, tools, system=""):
         self.system = system
         graph = StateGraph(AgentState)
         graph.add_node("llm", self.call_openai)
-        # graph.add_node("action", self.take_action)
-        graph.add_node("action", tool_node)
+        graph.add_node("action", self.take_action)
+        # graph.add_node("action", tool_node)
         graph.add_conditional_edges(
             "llm",
             self.exists_action,
@@ -80,6 +65,7 @@ class Agent:
         graph.set_entry_point("llm")
         self.graph = graph.compile()
         self.tools = {t.name: t for t in tools}
+        model = ChatOpenAI(model="gpt-4o-mini", temperature=0.6)
         self.model = model.bind_tools(tools)
 
     def exists_action(self, state: AgentState):
@@ -108,19 +94,70 @@ class Agent:
         return {'messages': results}
 
 
-prompt = """You are a smart research assistant. Use the search engine to look up information. \
-You are allowed to make multiple calls (either together or in sequence). \
-Only look up information when you are sure of what you want. \
-If you need to look up some information before asking a follow up question, you are allowed to do that!
+prompt = """
+You are an intelligent assistant with access to multiple tools to retrieve and process information efficiently. Your goal is to provide accurate, relevant, and concise responses based on the user's query. 
+
+Available Tools:
+get_rag – Retrieves relevant content from documents using a Retrieval-Augmented Generation (RAG) system. Use this tool when the user requests information from documents.
+get_sql – Queries metadata about documents, such as workspace, space, update date, and other document-related attributes. Use this tool when metadata is required.
+
+Decision-Making Guidelines:
+You may answer directly without using tools if the information is already known or can be inferred logically.
+Use get_rag when the user requires document content, summaries, or explanations based on stored knowledge.
+Use get_sql when metadata about a document is explicitly requested.
+Combine tools if necessary to provide a comprehensive response.
+If the user’s request is unclear, ask clarifying questions before proceeding.
+
+
+Step-by-Step Reasoning Process
+1. Question: The user’s input question.
+2. Thought: Analyze the intent of the question and determine what information is needed.
+3. Action: Decide on the necessary action (whether to use a tool or answer directly).
+4. Action Input: Provide input for the selected action.
+5. Observation: Capture the result from the action taken.
+6. (Repeat Thought/Action/Action Input/Observation if needed)
+7. Thought: Determine if enough information has been gathered.
+8. Final Answer: Provide the final response.
+
+Example: Combined Tool Usage
+    User Question: "Give me the summary of the latest updated document in workspace A."
+    Thought: I need to find the latest updated document in workspace A. First, I will use get_sql to retrieve the document title.
+    Action: Use get_sql.
+    Observation: The latest updated document is "Document X".
+    Thought: Now that I have the document title, I will use get_rag to retrieve its summary.
+    Action: Use get_rag.
+    Observation: The summary of Document X is "...(summary content)...".
+    Thought: I now have the final answer.
+    Final Answer: "The latest updated document in workspace A is Document X. Here is its summary: ...(summary content)..."
+    
+Example: Using get_rag to Summarize a Document
+    User Question: "Summarize document Y."
+    Thought: The user wants a summary of document Y. I need to retrieve its content using get_rag.
+    Action: Use get_rag.
+    Action Input: { "document": "Y", "type": "summary" }
+    Observation: The summary of Document Y is "...(summary content)...".
+    Thought: I now have the final answer.
+    Final Answer: "...(summary content)..."
+    
+        
+Response Guidelines:
+Prioritize accuracy and relevance in responses.
+If no relevant information is found, inform the user instead of making assumptions.
+Be efficient—avoid unnecessary tool usage if the answer can be provided directly.
+
+Your primary goal is to deliver precise, context-aware, and well-structured responses while optimizing tool usage.
 """
 
-model = ChatOpenAI(model="gpt-4o-mini")  #reduce inference cost
-abot = Agent(model, tools, system=prompt)
+abot = Agent(tools, system=prompt)
+info = "user_id: 1; space_id: 1"
+# question = "Which workspace did I update most recently? Which document did I update most recently? summary that document"
+question = "Which document did I update most recently? and summary that document."
+# question = "summary the key points in Reconstruction of Missing Electrocardiography Signals from Photoplethysmography Data Using Deep Neural Network in bioengineering-11-00365.pdf document "
+# question = "summary the key points in bioengineering-11-00365.pdf and futureinternet-15-00286.pdf documents "
+query = "Question: {}\nInfomation: {}".format(question, info)
 
-# messages = [HumanMessage(content="What is the weather in sf?")]
-# result = abot.graph.invoke({"messages": messages})
 
 for chunk in abot.graph.stream(
-    {"messages": [("human", "The model structure of the proposed combination of WNet and BiLSTM")]}, stream_mode="values"
+    {"messages": [("human", query)]}, stream_mode="values"
 ):
     print(chunk["messages"][-1])

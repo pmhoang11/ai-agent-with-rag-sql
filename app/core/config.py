@@ -24,5 +24,9 @@ class Settings(BaseSettings):
     PDF_DIR = os.getenv("PDF_DIR", "/mnt/data/pdf")
     os.makedirs(PDF_DIR, exist_ok=True)
 
+    # VECTORDB
+    VECTORDB_PERSIST_DIR=os.getenv("VECTORDB_PERSIST_DIR", "")
+    os.makedirs(VECTORDB_PERSIST_DIR, exist_ok=True)
+
 
 settings = Settings()

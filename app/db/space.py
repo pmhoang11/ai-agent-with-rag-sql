@@ -80,6 +80,7 @@ class SpacesService:
         space = Space(
             name=space_schema.name,
             owner_id=space_schema.owner_id,
+            workspace_id=space_schema.workspace_id,
         )
         self.session.add(space)
         self.session.commit()

@@ -7,7 +7,6 @@ class SpaceRequest(BaseModel):
     name: str
     owner_id: int
     workspace_id: int
-    num_documents: int
     class Config:
         use_enum_values = True
 

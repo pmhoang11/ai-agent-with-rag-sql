@@ -78,8 +78,10 @@ class DocumentsService:
             document: found document.
         """
         document = Document(
-            name=document_schema.name,
+            title=document_schema.title,
             owner_id=document_schema.owner_id,
+            workspace_id=document_schema.workspace_id,
+            space_id=document_schema.space_id,
         )
         self.session.add(document)
         self.session.commit()
