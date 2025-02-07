@@ -39,18 +39,19 @@ class VectorDB:
         )
 
 
-    def embed_docs(self, file_path, space_id:int):
+    def embed_docs(self, file_path, space_id:int, document_id:int):
         try:
             docs = load_docs(file_path)
             uuids = [str(uuid4()) for _ in range(len(docs))]
             for doc in docs:
                 doc.metadata["space_id"] = space_id
+                doc.metadata["document_id"] = document_id
             self.vector_store.add_documents(documents=docs, ids=uuids)
             return uuids
         except Exception as e:
             logger.error(e)
 
-    def retrieve(self, question: str, score_thr=1.8, k=5, space_id=None):
+    def retrieve(self, question: str, score_thr=2, k=15, space_id=None):
         try:
             if space_id:
                 retrieved_docs = self.vector_store.similarity_search_with_score(

@@ -8,7 +8,7 @@ from langchain_openai import ChatOpenAI
 from langchain_community.tools.sql_database.tool import QuerySQLDatabaseTool
 from langgraph.graph import START, END, StateGraph
 from app.core.config import settings
-
+from loguru import logger
 
 db = SQLDatabase.from_uri("postgresql://postgres:V8NPK74XBhuLMIHWTnJfbZBN@0.0.0.0:5432/data-db")
 print(db.dialect)
@@ -73,7 +73,7 @@ class RelationDB:
 
     def exists_action(self, state: State):
         result = state["query"]
-        print(result)
+        logger.info(result)
         compare =  "I don't know" == result
         if compare:
             return END
@@ -92,7 +92,7 @@ class RelationDB:
         )
         structured_llm = self.llm.with_structured_output(QueryOutput)
         result = structured_llm.invoke(prompt)
-        print(result)
+        logger.info(result)
         return {"query": result["query"]}
 
     def execute_query(self, state: State):
@@ -113,20 +113,3 @@ class RelationDB:
         response = self.llm.invoke(prompt)
         return {"answer": response.content}
 
-
-# model = ChatOpenAI(model="gpt-4o-mini")
-# rdb = RelationDB()
-
-# rdb.graph.get_graph().draw_png('test.png')
-
-# rs = rdb.graph.invoke(
-#     {"question": "How many employees are there?"}
-# )
-# print(rs)
-# for step in rdb.graph.stream(
-#     {"question": "How many users are there?"}, stream_mode="updates"
-# ):
-#     print(step)
-
-# chain = create_sql_query_chain(llm, db)
-# response = chain.invoke({"question": "How many employees are there"})

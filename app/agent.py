@@ -14,6 +14,7 @@ from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, Too
 from app.core.config import settings
 from app.query_relation_db import RelationDB
 from app.rag import RAG
+from loguru import logger
 
 
 @tool
@@ -39,10 +40,6 @@ ensuring precise and efficient data access.\
     result = rdb.graph.invoke({"question": question})
 
     return result["answer"]
-
-# tools = [get_weather, get_coolest_cities]
-tools = [get_rag, get_sql]
-tool_node = ToolNode(tools)
 
 
 class AgentState(TypedDict):
@@ -83,14 +80,14 @@ class Agent:
         tool_calls = state['messages'][-1].tool_calls
         results = []
         for t in tool_calls:
-            print(f"Calling: {t}")
+            logger.info(f"Calling: {t}")
             if not t['name'] in self.tools:      # check for bad tool name from LLM
-                print("\n ....bad tool name....")
+                logger.info("\n ....bad tool name....")
                 result = "bad tool name, retry"  # instruct LLM to retry if bad
             else:
                 result = self.tools[t['name']].invoke(t['args'])
             results.append(ToolMessage(tool_call_id=t['id'], name=t['name'], content=str(result)))
-        print("Back to the model!")
+        logger.info("Back to the model!")
         return {'messages': results}
 
 
@@ -139,6 +136,13 @@ Example: Using get_rag to Summarize a Document
     Thought: I now have the final answer.
     Final Answer: "...(summary content)..."
     
+Example: Using get_sql to Find the Workspace of the Latest Uploaded Document
+    User Question: "Find the workspace where User123 uploaded the latest document."
+    Thought: I need to find the latest document uploaded by User123 and determine its workspace. Since workspaces contain spaces, I only need to retrieve the workspace directly from user_id.
+    Action: Use get_sql.
+    Observation: Latest document was uploaded in Workspace_A.
+    Final Answer: "User123's latest document is in Workspace_A."
+    
         
 Response Guidelines:
 Prioritize accuracy and relevance in responses.
@@ -148,16 +152,7 @@ Be efficient—avoid unnecessary tool usage if the answer can be provided direct
 Your primary goal is to deliver precise, context-aware, and well-structured responses while optimizing tool usage.
 """
 
-abot = Agent(tools, system=prompt)
-info = "user_id: 1; space_id: 1"
-# question = "Which workspace did I update most recently? Which document did I update most recently? summary that document"
-question = "Which document did I update most recently? and summary that document."
-# question = "summary the key points in Reconstruction of Missing Electrocardiography Signals from Photoplethysmography Data Using Deep Neural Network in bioengineering-11-00365.pdf document "
-# question = "summary the key points in bioengineering-11-00365.pdf and futureinternet-15-00286.pdf documents "
-query = "Question: {}\nInfomation: {}".format(question, info)
+tools = [get_rag, get_sql]
+# tool_node = ToolNode(tools)
 
-
-for chunk in abot.graph.stream(
-    {"messages": [("human", query)]}, stream_mode="values"
-):
-    print(chunk["messages"][-1])
+agent = Agent(tools, system=prompt)
