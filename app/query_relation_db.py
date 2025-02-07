@@ -10,9 +10,10 @@ from langgraph.graph import START, END, StateGraph
 from app.core.config import settings
 from loguru import logger
 
-db = SQLDatabase.from_uri("postgresql://postgres:V8NPK74XBhuLMIHWTnJfbZBN@0.0.0.0:5432/data-db")
-print(db.dialect)
-print(db.get_usable_table_names())
+# db = SQLDatabase.from_uri("postgresql://postgres:V8NPK74XBhuLMIHWTnJfbZBN@0.0.0.0:5432/data-db")
+db = SQLDatabase.from_uri(settings.DATABASE_URL)
+logger.info(db.dialect)
+logger.info(db.get_usable_table_names())
 
 query_prompt = """
 Given an input question, create a syntactically correct {dialect} query to run to help find the answer. Unless the user specifies in his question a specific number of examples they wish to obtain, always limit your query to at most {top_k} results. You can order the results by a relevant column to return the most interesting examples in the database.

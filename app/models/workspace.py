@@ -15,9 +15,14 @@ class Workspace(BareBaseModel):
         nullable=False
     )
     name = Column(String)
+    num_spaces = Column(
+        Integer,
+        default=0,
+    )
     last_updated = Column(
         DateTime,
         default=datetime.now,
         onupdate=datetime.now,
     )
+
 

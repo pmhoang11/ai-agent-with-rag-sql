@@ -2,6 +2,7 @@ import os
 
 from langchain_core.messages import AIMessage
 from langchain_core.tools import tool
+from langgraph.checkpoint.memory import MemorySaver
 
 from langgraph.prebuilt import ToolNode
 from langchain_openai import ChatOpenAI
@@ -9,7 +10,7 @@ from langgraph.graph import StateGraph, MessagesState, START, END
 
 from typing import TypedDict, Annotated
 import operator
-from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, ToolMessage
+from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, ToolMessage, trim_messages
 
 from app.core.config import settings
 from app.query_relation_db import RelationDB
@@ -60,10 +61,22 @@ class Agent:
         )
         graph.add_edge("action", "llm")
         graph.set_entry_point("llm")
-        self.graph = graph.compile()
+        memory = MemorySaver()
+
+        self.graph = graph.compile(checkpointer=memory)
+
         self.tools = {t.name: t for t in tools}
         model = ChatOpenAI(model="gpt-4o-mini", temperature=0.6)
         self.model = model.bind_tools(tools)
+
+        self.trimmer = trim_messages(
+            max_tokens=8192,
+            strategy="last",
+            token_counter=model,
+            include_system=True,
+            allow_partial=False,
+            start_on="human",
+        )
 
     def exists_action(self, state: AgentState):
         result = state['messages'][-1]
@@ -73,7 +86,10 @@ class Agent:
         messages = state['messages']
         if self.system:
             messages = [SystemMessage(content=self.system)] + messages
-        message = self.model.invoke(messages)
+
+        trimmed_messages = self.trimmer.invoke(messages)
+
+        message = self.model.invoke(trimmed_messages)
         return {'messages': [message]}
 
     def take_action(self, state: AgentState):

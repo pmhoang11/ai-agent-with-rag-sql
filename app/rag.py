@@ -37,13 +37,17 @@ class RAG:
         self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.6)
 
     def retrieve(self, state: State):
-        logger.info("Start Retrieve")
-        retrieved_docs = vectordb.retrieve(state["question"], space_id=state["space_id"])
-        if len(retrieved_docs) == 0:
-            return {"context": retrieved_docs}
-        logger.info("Start Rerank")
-        reranked_results = rerank_results(state["question"], retrieved_docs)
-        return {"context": reranked_results}
+        try:
+            logger.info("Start Retrieve")
+            retrieved_docs = vectordb.retrieve(state["question"], space_id=state["space_id"])
+            if len(retrieved_docs) == 0:
+                return {"context": retrieved_docs}
+            logger.info("Start Rerank")
+            reranked_results = rerank_results(state["question"], retrieved_docs)
+            return {"context": reranked_results}
+        except Exception as e:
+            logger.error(e)
+            return {"context": []}
 
     def generate(self, state: State):
         docs_content = "\n\n".join(doc.page_content for doc in state["context"])

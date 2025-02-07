@@ -7,6 +7,7 @@ class WorkspaceResponse(BaseModel):
     id: int
     owner_id: int
     name: str
+    num_spaces: int
     last_updated: datetime
 
     class Config:

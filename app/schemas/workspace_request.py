@@ -11,7 +11,8 @@ class WorkspaceRequest(BaseModel):
 
 
 class WorkspaceUpdateRequest(BaseModel):
-    name: str | None
+    name: str | None = None
+    num_spaces: int | None = None
 
     class Config:
         use_enum_values = True

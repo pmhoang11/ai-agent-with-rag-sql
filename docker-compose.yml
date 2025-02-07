@@ -11,8 +11,24 @@ services:
     environment:
       POSTGRES_PASSWORD: ${DB_POSTGRES_PASSWORD}
       POSTGRES_DB: ${DB_POSTGRES_DB}
+#    ports:
+#      - 5432:5432
+    networks:
+      - db-net
+
+  app:
+    container_name: ${NAME}-${ENV}-app-dev
+    env_file:
+      - ./.env
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    volumes:
+       - vectordb-data:${VECTORDB_PERSIST_DIR}
+       - /mnt/data/pdf:${PDF_DIR}
+    command: /bin/sh -c "while true; do echo 'y' | uvicorn app.api.main:app --host 0.0.0.0 --port 5000 ; done"
     ports:
-      - 5432:5432
+      - "8003:5000"
     networks:
       - db-net
 
@@ -20,6 +36,8 @@ services:
 volumes:
   db-data:
     name: db-data
+  vectordb-data:
+    name: vectordb-data
 
 networks:
   db-net:

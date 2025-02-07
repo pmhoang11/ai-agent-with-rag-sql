@@ -10,3 +10,5 @@ langgraph==0.2.66
 langchain-chroma==0.2.1
 langchain-community==0.3.13
 transformers==4.48.2
+python-multipart==0.0.20
+pypdf==5.2.0

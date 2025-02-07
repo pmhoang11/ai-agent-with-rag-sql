@@ -30,6 +30,20 @@ class SpacesService:
         )
         return spaces
 
+    def get_all_spaces_in_workspace(self, space_id: int) -> list[Space]:
+        """Returns all spaces.
+        Returns:
+            list[Space]: list of spaces.
+        """
+        spaces = (
+            self.session
+            .query(Space)
+            .order_by(Space.id.desc())
+            .filter(Space.workspace_id == space_id)
+            .all()
+        )
+        return spaces
+
     def get_space_by_id(self, space_id: int) -> Space:
         """Finds space by given space_id.
         Args:
@@ -100,6 +114,18 @@ class SpacesService:
             if value:
                 setattr(space, field, value)
 
+        self.session.commit()
+        return space
+
+    def increase_num_documents(self, space_id: int) -> Space:
+        """Updates space by given space schema.
+        Args:
+            space_id: changeable space id.
+        Returns:
+            space: updated space.
+        """
+        space = self.get_space_by_id(space_id)
+        space.num_documents += 1
         self.session.commit()
         return space
 

@@ -32,8 +32,8 @@ def chat(
     logger.info(info)
     logger.info(query)
     logger.info(messages)
-
-    response = agent.graph.invoke(messages)
+    config = {"configurable": {"thread_id": chatbot_schema.thread_id}}
+    response = agent.graph.invoke(messages, config)
     answer = {"answer": response["messages"][-1].content}
 
     return JSONResponse(content=answer)

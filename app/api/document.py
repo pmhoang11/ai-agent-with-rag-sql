@@ -6,6 +6,8 @@ from typing import Optional
 from app.contextual_vectordb import context_vectordb
 from app.core.config import settings
 from app.db.document import DocumentsService
+from app.db.space import SpacesService
+
 from fastapi import APIRouter, Depends, status, UploadFile, File, HTTPException, Form
 from app.schemas.document_request import DocumentRequest
 from app.schemas.document_response import DocumentResponse
@@ -37,6 +39,7 @@ def upload_pdf(
         file: Annotated[UploadFile, File(description="Accept: application/pdf")],
         document_schema: DocumentRequest = Depends(parse_document_schema),
         document_service: DocumentsService = Depends(),
+        space_service: SpacesService = Depends(),
         advance: bool = True,
 ):
     """
@@ -63,12 +66,12 @@ def upload_pdf(
 
         document_schema.title = str(file.filename)
         doc_obj = document_service.add_document(document_schema)
+        space_service.increase_num_documents(doc_obj.workspace_id)
 
         if advance:
             context_vectordb.embed_docs(file_path, doc_obj.space_id, doc_obj.id)
         else:
             vectordb.embed_docs(file_path, doc_obj.space_id, doc_obj.id)
-
 
         return doc_obj
 

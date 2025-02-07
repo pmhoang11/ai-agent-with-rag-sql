@@ -102,6 +102,18 @@ class WorkspacesService:
         self.session.commit()
         return workspace
 
+    def increase_num_spaces(self, workspace_id: int) -> Workspace:
+        """Updates workspace by given workspace schema.
+        Args:
+            workspace_id: changeable workspace id.
+        Returns:
+            workspace: updated workspace.
+        """
+        workspace = self.get_workspace_by_id(workspace_id)
+        workspace.num_spaces += 1
+        self.session.commit()
+        return workspace
+
     def delete_workspace(self, workspace_id: int) -> None:
         """Deletes workspace by given id.
         Args:
