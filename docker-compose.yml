@@ -25,7 +25,7 @@ services:
       dockerfile: Dockerfile
     volumes:
        - vectordb-data:${VECTORDB_PERSIST_DIR}
-       - /mnt/data/pdf:${PDF_DIR}
+       - pdf-documents:${PDF_DIR}
     command: /bin/sh -c "while true; do echo 'y' | uvicorn app.api.main:app --host 0.0.0.0 --port 5000 ; done"
     ports:
       - "8003:5000"
@@ -38,6 +38,8 @@ volumes:
     name: db-data
   vectordb-data:
     name: vectordb-data
+  pdf-documents:
+    name: pdf-documents
 
 networks:
   db-net:

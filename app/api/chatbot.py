@@ -29,9 +29,7 @@ def chat(
     info = "user_id: {}; space_id: {}".format(chatbot_schema.user_id, chatbot_schema.space_id)
     query = "Question: {}\nAdditional Information (optional): {}".format(chatbot_schema.question, info)
     messages = {"messages": [{"role": "human", "content": query}]}
-    logger.info(info)
-    logger.info(query)
-    logger.info(messages)
+    logger.info(f"{chatbot_schema.thread_id} | {query}")
     config = {"configurable": {"thread_id": chatbot_schema.thread_id}}
     response = agent.graph.invoke(messages, config)
     answer = {"answer": response["messages"][-1].content}

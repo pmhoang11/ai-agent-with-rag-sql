@@ -6,10 +6,8 @@ import requests
 from loguru import logger
 from web_demo.fetch import fetch_users, fetch_workspaces, fetch_spaces
 
-THREAD_ID = str(uuid4())
 
-
-def chatbot_response(message, history, user, space, *args, **kargs):
+def chatbot_response(message, history, user, space, thread_id, *args, **kargs):
     headers = {
         'accept': 'application/json',
         'Content-Type': 'application/json',
@@ -22,7 +20,7 @@ def chatbot_response(message, history, user, space, *args, **kargs):
         'question': message,
         'space_id': space_id,
         'user_id': user_id,
-        'thread_id': THREAD_ID,
+        'thread_id': thread_id,
     }
 
     logger.info(json_data)
@@ -61,10 +59,14 @@ def upload_file(file, user, workspace, space):
         return "Upload failed"
 
 
+def return_uuid():
+    return str(uuid4())
+
 with gr.Blocks(fill_height=True) as demo:
     with gr.Row(scale=1):
         gr.Markdown("# AGENT - RAG & Text-to-SQL")
-        tt = gr.Textbox(label="THREAD_ID", value=f"{THREAD_ID}")
+        thread_id = gr.State()
+        demo.load(fn=return_uuid, outputs=thread_id)
 
     with gr.Row(scale=5):
         with gr.Column(scale=1):
@@ -88,7 +90,7 @@ with gr.Blocks(fill_height=True) as demo:
         with gr.Column(scale=3):
             chatbot = gr.ChatInterface(
                 chatbot_response,
-                additional_inputs=[user, space],
+                additional_inputs=[user, space, thread_id],
             )
 
 

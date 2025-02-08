@@ -6,11 +6,11 @@ from langgraph.checkpoint.memory import MemorySaver
 
 from langgraph.prebuilt import ToolNode
 from langchain_openai import ChatOpenAI
-from langgraph.graph import StateGraph, MessagesState, START, END
+from langgraph.graph import StateGraph, MessagesState, START, END, add_messages
 
-from typing import TypedDict, Annotated
+from typing import TypedDict, Annotated, Sequence
 import operator
-from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, ToolMessage, trim_messages
+from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, ToolMessage, trim_messages, BaseMessage
 
 from app.core.config import settings
 from app.query_relation_db import RelationDB
@@ -39,16 +39,18 @@ ensuring precise and efficient data access.\
     """
     rdb = RelationDB()
     result = rdb.graph.invoke({"question": question})
-
-    return result["answer"]
+    if "answer" in result:
+        return result["answer"]
+    else:
+        return "I don't know"
 
 
 class AgentState(TypedDict):
-    messages: Annotated[list[AnyMessage], operator.add]
+    messages: Annotated[Sequence[BaseMessage], add_messages]
 
 
 class Agent:
-    def __init__(self, tools, system=""):
+    def __init__(self, tools, system):
         self.system = system
         graph = StateGraph(AgentState)
         graph.add_node("llm", self.call_openai)
@@ -70,9 +72,9 @@ class Agent:
         self.model = model.bind_tools(tools)
 
         self.trimmer = trim_messages(
-            max_tokens=8192,
+            token_counter=len,
+            max_tokens=10,
             strategy="last",
-            token_counter=model,
             include_system=True,
             allow_partial=False,
             start_on="human",
@@ -87,7 +89,9 @@ class Agent:
         if self.system:
             messages = [SystemMessage(content=self.system)] + messages
 
+        logger.info("Start trim messages")
         trimmed_messages = self.trimmer.invoke(messages)
+        logger.info("Start model invoke")
 
         message = self.model.invoke(trimmed_messages)
         return {'messages': [message]}
@@ -102,6 +106,8 @@ class Agent:
                 result = "bad tool name, retry"  # instruct LLM to retry if bad
             else:
                 result = self.tools[t['name']].invoke(t['args'])
+            logger.info(f"Result: {result}")
+
             results.append(ToolMessage(tool_call_id=t['id'], name=t['name'], content=str(result)))
         logger.info("Back to the model!")
         return {'messages': results}
@@ -157,8 +163,14 @@ Example: Using get_sql to Find the Workspace of the Latest Uploaded Document
     Thought: I need to find the latest document uploaded by User123 and determine its workspace. Since workspaces contain spaces, I only need to retrieve the workspace directly from user_id.
     Action: Use get_sql.
     Observation: Latest document was uploaded in Workspace_A.
+    Thought: I now have the final answer.
     Final Answer: "User123's latest document is in Workspace_A."
-    
+    Note: 
+        Instead of returning raw IDs, replace them with the corresponding name. Ensure that the response is in natural language and does not include any system-generated identifiers or database field names.
+        For example, instead of:  
+        "The latest document uploaded by user_id 1 in space_id 1 is ..."  
+        Return:  
+        "The latest document uploaded by [user_name] in [space_name] is ...".
         
 Response Guidelines:
 Prioritize accuracy and relevance in responses.
