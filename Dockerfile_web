@@ -1,0 +1,14 @@
+FROM python:3.10
+
+WORKDIR /app
+
+RUN pip install gradio==5.15.0 loguru==0.7.1
+
+COPY ./web_demo /app
+
+ENV GRADIO_SERVER_NAME="0.0.0.0" \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
+
+CMD ["python", "app.py"]

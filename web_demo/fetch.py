@@ -1,7 +1,7 @@
 import gradio as gr
 import requests
 
-base_url = "http://localhost:8003"
+base_url = "http://app:5000"
 headers = {
     'accept': 'application/json',
 }

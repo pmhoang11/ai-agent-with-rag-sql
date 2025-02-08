@@ -4,7 +4,7 @@ from uuid import uuid4
 import gradio as gr
 import requests
 from loguru import logger
-from web_demo.fetch import fetch_users, fetch_workspaces, fetch_spaces
+from fetch import fetch_users, fetch_workspaces, fetch_spaces, base_url
 
 
 def chatbot_response(message, history, user, space, thread_id, *args, **kargs):
@@ -25,7 +25,7 @@ def chatbot_response(message, history, user, space, thread_id, *args, **kargs):
 
     logger.info(json_data)
 
-    response = requests.post('http://localhost:8003/chatbot/chat', headers=headers, json=json_data)
+    response = requests.post(f'{base_url}/chatbot/chat', headers=headers, json=json_data)
     logger.info(response.text)
     data = response.json()
     return data["answer"]
@@ -51,7 +51,7 @@ def upload_file(file, user, workspace, space):
         'document_schema': (None, f'{{"owner_id":{user_id},"workspace_id":{workspace_id},"space_id":{space_id}}}'),
     }
 
-    response = requests.post('http://localhost:8003/documents/upload', params=params, headers=headers, files=files)
+    response = requests.post(f'{base_url}/documents/upload', params=params, headers=headers, files=files)
 
     if response.ok:
         return f"Uploaded file: {filename}"

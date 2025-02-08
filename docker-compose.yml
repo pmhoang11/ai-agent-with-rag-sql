@@ -32,6 +32,16 @@ services:
     networks:
       - db-net
 
+  web:
+    container_name: ${NAME}-${ENV}-web-demo
+    build:
+      context: ./
+      dockerfile: Dockerfile_web
+    ports:
+      - "7860:7860"
+    networks:
+      - db-net
+
 
 volumes:
   db-data:
