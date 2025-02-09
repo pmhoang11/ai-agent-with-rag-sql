@@ -31,6 +31,8 @@ services:
       - "8003:5000"
     networks:
       - db-net
+    depends_on:
+      - db
 
   web:
     container_name: ${NAME}-${ENV}-web-demo
@@ -41,6 +43,11 @@ services:
       - "7860:7860"
     networks:
       - db-net
+    depends_on:
+      - db
+      - app
+
+
 
 
 volumes:
