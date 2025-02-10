@@ -81,6 +81,7 @@ class RelationDB:
         else:
             return "execute_query"
 
+    @settings.timeit
     def write_query(self, state: State):
         """Generate SQL query to fetch information."""
         prompt = query_prompt_template.invoke(
@@ -96,6 +97,7 @@ class RelationDB:
         logger.info(result)
         return {"query": result["query"]}
 
+    @settings.timeit
     def execute_query(self, state: State):
         """Execute SQL query."""
         execute_query_tool = QuerySQLDatabaseTool(db=db)

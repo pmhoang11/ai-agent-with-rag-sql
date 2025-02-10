@@ -80,17 +80,19 @@ class ContextualVectorDB:
     def __init__(self):
         self.embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
         self.vector_store = Chroma(
-            collection_name="test_abc_123",
+            collection_name=settings.COLLECTION_NAME,
             embedding_function=self.embeddings,
-            persist_directory=settings.VECTORDB_PERSIST_DIR
+            persist_directory=settings.VECTORDB_PERSIST_DIR,
+            collection_metadata=settings.COLLECTION_METADATA
         )
 
+    @settings.timeit
     def embed_docs(self, file_path, space_id: int, document_id:int):
         try:
             contextual, docs = load_docs(file_path)
             args = [(doc, contextual[i], space_id, document_id) for i, doc in enumerate(docs)]
 
-            with Pool(processes=os.cpu_count() - 3) as pool:
+            with Pool(processes=max(1, os.cpu_count() - 3)) as pool:
                 update_docs = []
                 with tqdm(total=len(args), desc="Processing Docs") as pbar:
                     for result in pool.imap_unordered(process_work, args):

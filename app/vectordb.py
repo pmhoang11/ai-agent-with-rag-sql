@@ -33,12 +33,13 @@ class VectorDB:
     def __init__(self):
         self.embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
         self.vector_store = Chroma(
-            collection_name="test_abc_123",
+            collection_name=settings.COLLECTION_NAME,
             embedding_function=self.embeddings,
-            persist_directory=settings.VECTORDB_PERSIST_DIR
+            persist_directory=settings.VECTORDB_PERSIST_DIR,
+            collection_metadata=settings.COLLECTION_METADATA
         )
 
-
+    @settings.timeit
     def embed_docs(self, file_path, space_id:int, document_id:int):
         try:
             docs = load_docs(file_path)
@@ -51,6 +52,7 @@ class VectorDB:
         except Exception as e:
             logger.error(e)
 
+    @settings.timeit
     def retrieve(self, question: str, score_thr=2, k=15, space_id=None):
         try:
             if space_id:

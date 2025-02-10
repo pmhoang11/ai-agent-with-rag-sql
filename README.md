@@ -16,6 +16,10 @@ This project is an AI-powered system that combines Retrieval-Augmented Generatio
   2. Embedding these chunks using a vector model.
   3. Storing the embeddings in a vector database for semantic search.
 
+  #### Efficient Vector Search with HNSW
+  To enhance search performance and retrieval efficiency, **Hierarchical Navigable Small World (HNSW)** indexing is used in **ChromaDB**. HNSW is a graph-based approximate nearest neighbor (ANN) algorithm that enables **low-latency** and **high-accuracy** vector search.
+
+
 ### 2. **Metadata Database & Text-to-SQL Tool**
 
 - A **PostgreSQL** database tracks metadata about workspaces, spaces, and documents.
@@ -42,8 +46,8 @@ The AI agent intelligently determines how to process queries:
 
 ## Methods
 
-### 1. **Contextual Retrieval with RAG**
-![RAG Workflow](images/Contextual_retrival.png)
+### 1. **RAG with Contextual Retrieval**
+![RAG Workflow](images/Contextual_retrieval.png)
 
 #### **Preprocessing**
 
@@ -104,14 +108,14 @@ The **AI Agent** operates based on the **ReAct (Reasoning and Action)** paradigm
     
 ## Technology Stack
 
-| Component         | Technology Used |
-|-------------------|----------------|
-| **Vector Database** | ChromaDB |
-| **Embedding Model** | OpenAI |
-| **Text-to-SQL** | OpenAI + LangChain |
-| **LLM** | OpenAI GPT |
+| Component         | Technology Used       |
+|-------------------|-----------------------|
+| **Vector Database** | ChromaDB (HNSW)       |
+| **Embedding Model** | OpenAI                |
+| **Text-to-SQL** | OpenAI + LangChain    |
+| **LLM** | OpenAI GPT            |
 | **Agent Framework** | LangChain + LangGraph |
-| **Metadata Database** | PostgreSQL |
-| **Web Framework** | Gradio |
-| **Containerization** | Docker |
+| **Metadata Database** | PostgreSQL            |
+| **Web Framework** | Gradio                |
+| **Containerization** | Docker                |
 

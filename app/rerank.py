@@ -8,6 +8,7 @@ from app.core.config import settings
 from loguru import logger
 
 
+@settings.timeit
 def rerank_results(query: str, results: List[Document], k: int = 5) -> List[Document]:
     llm = ChatOpenAI(
         model="gpt-4o-mini",
